@@ -6,7 +6,7 @@ class RNacos < Formula
   homepage "https://github.com/r-nacos/r-nacos"
   url "https://github.com/nacos-group/r-nacos/releases/download/v0.5.7/rnacos-x86_64-apple-darwin.tar.gz"
   version "v0.5.7"
-  sha256 "af7a841dba48b0b5dad35904f43451d6ee3152ddda11b694a9cf8805a1d99511"
+  sha256 "1ff8f69e46c3c6680e89912cd5b57ef7cb0c0225acd3b95a1d90362556af0e2d"
   license "Apache-2.0 license"
 
   # depends_on "cmake" => :build
