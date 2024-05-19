@@ -11,14 +11,14 @@ class RNacosLatest < Formula
 
   # depends_on "cmake" => :build
   on_macos do
-    on_arm do
+    if Hardware::CPU.arm?
       url "https://github.com/nacos-group/r-nacos/releases/download/v0.5.8-beta.1/rnacos-aarch64-apple-darwin.tar.gz"
     end
   end
 
   on_linux do
     url "https://github.com/nacos-group/r-nacos/releases/download/v0.5.8-beta.1/rnacos-x86_64-unknown-linux-musl.tar.gz"
-    on_arm do
+    if Hardware::CPU.arm?
       url "https://github.com/nacos-group/r-nacos/releases/download/v0.5.8-beta.1/rnacos-aarch64-unknown-linux-musl.tar.gz"
     end
   end
