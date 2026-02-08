@@ -1,6 +1,5 @@
-# Documentation: https://docs.brew.sh/Formula-Cookbook
-#                https://rubydoc.brew.sh/Formula
-# PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
+# r-nacos Homebrew Formula
+# Provides service management and macOS compatibility
 class RNacos < Formula
   desc "r-nacos"
   homepage "https://github.com/r-nacos/r-nacos"
@@ -28,24 +27,51 @@ class RNacos < Formula
   end
 
   def install
-    # ENV.deparallelize  # if your formula fails when building in parallel
-    # Remove unrecognized options if warned by configure
-    # https://rubydoc.brew.sh/Formula.html#std_configure_args-instance_method
-    #system "./configure", *std_configure_args, "--disable-silent-rules"
-    # system "cmake", "-S", ".", "-B", "build", *std_cmake_args
     bin.install "rnacos"
   end
 
+  def post_install
+    if OS.mac?
+      # Auto-sign the binary to avoid macOS security restrictions
+      system "codesign", "--force", "--deep", "--sign", "-", bin/"rnacos"
+    end
+    
+    # Create proper directories
+    (var/"r-nacos/data").mkpath
+    (var/"log").mkpath
+    
+    # Copy any existing data from default location to our managed location
+    default_data_dir = Pathname.new(Dir.home) / ".local/share/r-nacos/nacos_db"
+    managed_data_dir = var/"r-nacos/data"
+    
+    if default_data_dir.exist? && !managed_data_dir.children.any?
+      ohai "Migrating existing r-nacos data to managed directory..."
+      system "cp", "-R", "#{default_data_dir}/.", "#{managed_data_dir}/"
+    end
+    
+    ohai "r-nacos installation completed!"
+    ohai "To start the service: brew services start r-nacos"
+    ohai "Service logs will be available at: #{var}/log/r-nacos.log"
+  end
+
+  service do
+    run [opt_bin/"rnacos"]
+    keep_alive true
+    working_dir var/"r-nacos"
+    log_path var/"log/r-nacos.log"
+    error_log_path var/"log/r-nacos-error.log"
+    run_at_load true
+    environment_variables({
+      "RNACOS_HTTP_PORT" => "8848",
+      "RNACOS_GRPC_PORT" => "9848",
+      "RNACOS_HTTP_CONSOLE_PORT" => "10848",
+      "RNACOS_DATA_DIR" => (var/"r-nacos/data").to_s,
+      "RUST_LOG" => "info"
+    })
+  end
+  
   test do
-    # `test do` will create, run in and delete a temporary directory.
-    #
-    # This test will fail and we won't accept that! For Homebrew/homebrew-core
-    # this will need to be a test that verifies the functionality of the
-    # software. Run the test with `brew test r-nacos`. Options passed
-    # to `brew install` such as `--HEAD` also need to be provided to `brew test`.
-    #
-    # The installed folder is not in the path, so use the entire path to any
-    # executables being tested: `system "#{bin}/program", "do", "something"`.
-    system "#{bin}/rnacos", "--version" 
+    system "#{bin}/rnacos", "--help"
+    assert_match "rnacos", shell_output("#{bin}/rnacos --version 2>&1", 0)
   end
 end
